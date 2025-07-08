@@ -1,660 +1,267 @@
+<!-- Coloque este conteúdo em um arquivo .html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leitor de Excel Modernizado</title>
-    <!-- Inclui Tailwind CSS para um estilo moderno e responsivo -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #374151;
-        }
-        .container {
-            max-width: 960px;
-            margin: 40px auto;
-            padding: 24px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: separate; /* Permite border-spacing */
-            border-spacing: 0 8px; /* Espaçamento vertical entre as linhas */
-            margin-top: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border: none; /* Remove a borda padrão */
-        }
-        th {
-            background-color: #e9ecef;
-            color: #495057;
-            font-weight: 700;
-            border-bottom: 2px solid #dee2e6;
-        }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        tr:hover {
-            background-color: #e2f4ff;
-        }
-        /* Arredondar os cantos da primeira e última célula do cabeçalho e da primeira e última linha */
-        table thead tr th:first-child {
-            border-top-left-radius: 8px;
-        }
-        table thead tr th:last-child {
-            border-top-right-radius: 8px;
-        }
-        table tbody tr:last-child td:first-child {
-            border-bottom-left-radius: 8px;
-        }
-        table tbody tr:last-child td:last-child {
-            border-bottom-right-radius: 8px;
-        }
-
-        /* Estilos para o Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 500px;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-        }
-
-        /* Estilos para o Custom Alert/Confirm */
-        .custom-alert-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001; /* Acima do modal */
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .custom-alert-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .custom-alert-content {
-            background-color: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease;
-        }
-        .custom-alert-overlay.show .custom-alert-content {
-            transform: translateY(0);
-        }
-    </style>
-    <!-- Biblioteca SheetJS (XLSX) para leitura e escrita de arquivos Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Biblioteca jsPDF para geração de PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Plugin jsPDF-AutoTable para tabelas em PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leitor de Excel Modernizado</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ... (mantenha todo o CSS que você já tem no <style>) ... */
+    /* Por brevidade, omiti o CSS aqui pois ele não precisa ser alterado. */
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Visualizador e Editor de Dados Excel</h1>
-
-        <div class="flex flex-col items-center mb-8">
-            <label for="inputExcel" class="block text-lg font-medium text-gray-700 mb-4">
-                Selecione um arquivo Excel (.xlsx, .xls)
-            </label>
-            <input type="file" id="inputExcel" accept=".xlsx, .xls"
-                   class="block w-full max-w-sm text-sm text-gray-900
-                          bg-gray-50 rounded-lg border border-gray-300
-                          cursor-pointer focus:outline-none focus:border-blue-500
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-full file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-blue-50 file:text-blue-700
-                          hover:file:bg-blue-100">
-            <p id="loadingMessage" class="mt-4 text-blue-600 font-medium hidden">
-                Carregando e processando...
-            </p>
-            <p id="errorMessage" class="mt-4 text-red-600 font-medium hidden">
-                Ocorreu um erro ao processar o arquivo. Por favor, tente novamente.
-            </p>
-        </div>
-
-        <div class="flex flex-wrap justify-center gap-4 mb-8">
-            <button id="btnInsert"
-                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
-                Novo 
-            </button>
-            <button id="btnEdit"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 opacity-50 cursor-not-allowed" disabled>
-                Editar 
-            </button>
-            <button id="btnDelete"
-                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 opacity-50 cursor-not-allowed" disabled>
-                Excluir 
-            </button>
-            <button id="btnGenerateExcelReport"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
-                Gerar Relatório (Excel)
-            </button>
-            <button id="btnGeneratePdfReport"
-                    class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
-                Gerar Relatório (PDF)
-            </button>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table id="tabelaExcel" class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <!-- Cabeçalhos serão gerados dinamicamente do Excel -->
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carregue um arquivo para ver os cabeçalhos</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <!-- Dados do Excel serão inseridos aqui -->
-                    <tr>
-                        <td colspan="6" class="text-center py-8 text-gray-500">
-                            Nenhum arquivo carregado. Por favor, selecione um arquivo Excel.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Modal para Inserir/Editar Registros -->
-    <div id="dataModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-gray-800"></h2>
-            <form id="dataForm" class="grid grid-cols-1 gap-4">
-                <!-- Campos do formulário serão gerados dinamicamente -->
-            </form>
-            <div class="flex justify-end gap-4 mt-8">
-                <button id="saveRecordBtn"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
-                    Salvar
-                </button>
-                <button id="cancelModalBtn"
-                        class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Alert/Confirm Dialog -->
-    <div id="customAlertDialog" class="custom-alert-overlay hidden">
-        <div class="custom-alert-content">
-            <p id="customAlertMessage" class="text-lg font-medium text-gray-700 mb-6"></p>
-            <div class="flex justify-center gap-4">
-                <button id="customAlertConfirmBtn"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out hidden">
-                    Confirmar
-                </button>
-                <button id="customAlertCancelBtn"
-                        class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
-                    OK
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Seleciona os elementos do DOM
-        const inputExcel = document.getElementById('inputExcel');
-        const tabelaExcelHead = document.querySelector('#tabelaExcel thead tr');
-        const tabelaExcelBody = document.querySelector('#tabelaExcel tbody');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const errorMessage = document.getElementById('errorMessage');
-
-        const btnInsert = document.getElementById('btnInsert');
-        const btnEdit = document.getElementById('btnEdit');
-        const btnDelete = document.getElementById('btnDelete');
-        const btnGenerateExcelReport = document.getElementById('btnGenerateExcelReport'); // Renomeado para clareza
-        const btnGeneratePdfReport = document.getElementById('btnGeneratePdfReport'); // Novo botão PDF
-
-        const dataModal = document.getElementById('dataModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const dataForm = document.getElementById('dataForm');
-        const saveRecordBtn = document.getElementById('saveRecordBtn');
-        const cancelModalBtn = document.getElementById('cancelModalBtn');
-
-        const customAlertDialog = document.getElementById('customAlertDialog');
-        const customAlertMessage = document.getElementById('customAlertMessage');
-        const customAlertConfirmBtn = document.getElementById('customAlertConfirmBtn');
-        const customAlertCancelBtn = document.getElementById('customAlertCancelBtn');
-
-        let tableData = []; // Armazena os dados do Excel como um array de objetos
-        let columnHeaders = []; // Armazena os cabeçalhos das colunas
-        let selectedRowIndex = -1; // Índice da linha selecionada para edição/exclusão
-
-        // --- Funções de Utilitário ---
-
-        /**
-         * Exibe uma mensagem personalizada (alerta ou confirmação).
-         * @param {string} message - A mensagem a ser exibida.
-         * @param {boolean} isConfirm - Se true, exibe botões de confirmação/cancelamento.
-         * @returns {Promise<boolean>} - Resolve com true se confirmado, false se cancelado.
-         */
-        function showCustomAlert(message, isConfirm = false) {
-            return new Promise((resolve) => {
-                customAlertMessage.textContent = message;
-                customAlertConfirmBtn.classList.toggle('hidden', !isConfirm);
-                customAlertCancelBtn.textContent = isConfirm ? 'Cancelar' : 'OK'; // Altera texto do botão
-                customAlertDialog.classList.add('show');
-
-                const handleConfirm = () => {
-                    customAlertDialog.classList.remove('show');
-                    customAlertConfirmBtn.removeEventListener('click', handleConfirm);
-                    customAlertCancelBtn.removeEventListener('click', handleCancel);
-                    resolve(true);
-                };
-
-                const handleCancel = () => {
-                    customAlertDialog.classList.remove('show');
-                    customAlertConfirmBtn.removeEventListener('click', handleConfirm);
-                    customAlertCancelBtn.removeEventListener('click', handleCancel);
-                    resolve(false);
-                };
-
-                customAlertConfirmBtn.addEventListener('click', handleConfirm);
-                customAlertCancelBtn.addEventListener('click', handleCancel);
-            });
-        }
-
-        /**
-         * Limpa a seleção da linha na tabela e desabilita os botões de edição/exclusão.
-         */
-        function clearSelection() {
-            document.querySelectorAll('#tabelaExcel tbody tr').forEach(row => {
-                row.classList.remove('bg-blue-100');
-            });
-            selectedRowIndex = -1;
-            btnEdit.setAttribute('disabled', true);
-            btnDelete.setAttribute('disabled', true);
-            btnEdit.classList.add('opacity-50', 'cursor-not-allowed');
-            btnDelete.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-
-        /**
-         * Renderiza a tabela com os dados fornecidos.
-         * @param {Array<Object>} data - Array de objetos representando as linhas da tabela.
-         */
-        function renderTable(data) {
-            clearSelection(); // Limpa qualquer seleção existente e desabilita botões
-            tabelaExcelBody.innerHTML = ''; // Limpa o corpo da tabela
-            tabelaExcelHead.innerHTML = ''; // Limpa o cabeçalho da tabela
-
-            if (!data || data.length === 0) {
-                tabelaExcelBody.innerHTML = `<tr><td colspan="${columnHeaders.length > 0 ? columnHeaders.length : 1}" class="text-center py-8 text-gray-500">
-                    Nenhum dado para exibir. Carregue um arquivo ou insira um registro.
-                </td></tr>`;
-                tabelaExcelHead.innerHTML = `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carregue um arquivo para ver os cabeçalhos</th>`;
-                return;
-            }
-
-            // Renderiza os cabeçalhos
-            columnHeaders.forEach(header => {
-                const th = document.createElement('th');
-                th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
-                th.textContent = header;
-                tabelaExcelHead.appendChild(th);
-            });
-
-            // Renderiza as linhas
-            data.forEach((rowData, index) => {
-                const tr = document.createElement('tr');
-                tr.dataset.rowIndex = index; // Armazena o índice da linha para seleção
-                tr.className = 'cursor-pointer'; // Adiciona cursor pointer para indicar clicável
-
-                columnHeaders.forEach(header => {
-                    const td = document.createElement('td');
-                    td.textContent = rowData[header] !== undefined ? rowData[header] : '';
-                    tr.appendChild(td);
-                });
-
-                tr.addEventListener('click', () => selectRow(tr, index));
-                tabelaExcelBody.appendChild(tr);
-            });
-
-            // Se houver uma linha selecionada anteriormente, re-seleciona
-            if (selectedRowIndex !== -1 && tabelaExcelBody.children[selectedRowIndex]) {
-                tabelaExcelBody.children[selectedRowIndex].classList.add('bg-blue-100');
-            }
-        }
-
-        /**
-         * Seleciona uma linha na tabela.
-         * @param {HTMLElement} rowElement - O elemento TR da linha.
-         * @param {number} index - O índice da linha nos dados.
-         */
-        function selectRow(rowElement, index) {
-            // Remove a seleção de todas as linhas
-            document.querySelectorAll('#tabelaExcel tbody tr').forEach(row => {
-                row.classList.remove('bg-blue-100');
-            });
-
-            // Adiciona a seleção à linha clicada
-            rowElement.classList.add('bg-blue-100');
-            selectedRowIndex = index;
-
-            // Habilita os botões de edição e exclusão
-            btnEdit.removeAttribute('disabled');
-            btnDelete.removeAttribute('disabled');
-            btnEdit.classList.remove('opacity-50', 'cursor-not-allowed');
-            btnDelete.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-
-        /**
-         * Abre o modal para inserir ou editar um registro.
-         * @param {string} mode - 'insert' ou 'edit'.
-         * @param {number} [rowIndex] - O índice da linha a ser editada (apenas para 'edit').
-         */
-        async function openDataModal(mode, rowIndex = -1) { // Tornando a função async
-            modalTitle.textContent = mode === 'insert' ? 'Inserir Novo Registro' : 'Editar Registro';
-            dataForm.innerHTML = ''; // Limpa campos anteriores
-            selectedRowIndex = rowIndex; // Atualiza o índice da linha selecionada
-
-            // Lida com o caso onde não há cabeçalhos definidos para inserção/edição
-            if (columnHeaders.length === 0) {
-                if (mode === 'insert') {
-                    const confirmed = await showCustomAlert('Não há cabeçalhos de coluna definidos. Deseja adicionar uma coluna padrão "Nova Coluna" para começar?', true);
-                    if (confirmed) {
-                        columnHeaders.push('Nova Coluna');
-                    } else {
-                        return; // Usuário cancelou
-                    }
-                } else { // mode === 'edit'
-                    await showCustomAlert('Não há cabeçalhos de coluna definidos para edição. Por favor, carregue um arquivo Excel primeiro.', false);
-                    return; // Impede que o modal seja aberto
-                }
-            }
-
-            // Se columnHeaders ainda estiver vazio após a lógica acima (ex: usuário cancelou o cabeçalho padrão)
-            if (columnHeaders.length === 0) {
-                return;
-            }
-
-            columnHeaders.forEach(header => {
-                const div = document.createElement('div');
-                div.className = 'flex flex-col';
-
-                const label = document.createElement('label');
-                label.htmlFor = `field-${header}`;
-                label.className = 'block text-sm font-medium text-gray-700 mb-1';
-                label.textContent = header;
-
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = `field-${header}`;
-                input.name = header;
-                input.className = 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
-
-                // Preenche os campos se for modo de edição
-                if (mode === 'edit' && rowIndex !== -1 && tableData[rowIndex]) {
-                    input.value = tableData[rowIndex][header] !== undefined ? tableData[rowIndex][header] : '';
-                }
-
-                div.appendChild(label);
-                div.appendChild(input);
-                dataForm.appendChild(div);
-            });
-
-            dataModal.classList.add('show');
-        }
-
-        /**
-         * Fecha o modal.
-         */
-        function closeDataModal() {
-            dataModal.classList.remove('show');
-            dataForm.reset(); // Limpa o formulário
-        }
-
-        /**
-         * Salva o registro (insere ou atualiza) e re-renderiza a tabela.
-         */
-        function saveRecord() {
-            const formData = new FormData(dataForm);
-            const newRecord = {};
-            columnHeaders.forEach(header => {
-                newRecord[header] = formData.get(header);
-            });
-
-            if (selectedRowIndex === -1) {
-                // Inserir novo registro
-                tableData.push(newRecord);
-                showCustomAlert('Registro inserido com sucesso!', false);
-            } else {
-                // Editar registro existente
-                tableData[selectedRowIndex] = newRecord;
-                showCustomAlert('Registro atualizado com sucesso!', false);
-            }
-            renderTable(tableData);
-            closeDataModal();
-            clearSelection(); // Limpa a seleção após salvar
-        }
-
-        /**
-         * Exclui o registro selecionado.
-         */
-        async function deleteRecord() {
-            if (selectedRowIndex === -1) {
-                showCustomAlert('Por favor, selecione um registro para excluir.', false);
-                return;
-            }
-
-            const confirmDelete = await showCustomAlert('Tem certeza que deseja excluir este registro?', true);
-            if (confirmDelete) {
-                tableData.splice(selectedRowIndex, 1); // Remove o registro do array
-                clearSelection(); // Limpa a seleção antes de re-renderizar
-                renderTable(tableData);
-                showCustomAlert('Registro excluído com sucesso!', false);
-            }
-        }
-
-        /**
-         * Gera um relatório (arquivo Excel) dos dados atuais da tabela.
-         */
-        function generateExcelReport() {
-            if (tableData.length === 0) {
-                showCustomAlert('Não há dados para gerar o relatório Excel.', false);
-                return;
-            }
-
-            // Prepara os dados para o SheetJS, incluindo o cabeçalho
-            const dataToExport = [columnHeaders, ...tableData.map(row => columnHeaders.map(header => row[header]))];
-
-            const ws = XLSX.utils.aoa_to_sheet(dataToExport);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Dados");
-            XLSX.writeFile(wb, "relatorio_dados_excel.xlsx");
-
-            showCustomAlert('Relatório Excel gerado com sucesso!', false);
-        }
-
-        /**
-         * Gera um relatório (arquivo PDF) dos dados atuais da tabela.
-         */
-        function generatePdfReport() {
-            if (tableData.length === 0) {
-                showCustomAlert('Não há dados para gerar o relatório PDF.', false);
-                return;
-            }
-
-            // Cria uma nova instância jsPDF
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'pt', 'a4'); // 'p' para retrato, 'pt' para pontos, 'a4' para tamanho de página
-
-            // Prepara os dados para jspdf-autotable
-            const head = [columnHeaders];
-            const body = tableData.map(row => columnHeaders.map(header => row[header]));
-
-            // Adiciona a tabela ao PDF
-            doc.autoTable({
-                head: head,
-                body: body,
-                startY: 60, // Posição inicial da tabela
-                theme: 'grid', // Estilo da tabela (grid, striped, plain)
-                headStyles: { fillColor: [233, 236, 239], textColor: [73, 80, 87], fontStyle: 'bold' }, // Estilo do cabeçalho
-                styles: { fontSize: 10, cellPadding: 8, overflow: 'linebreak' }, // Estilo das células
-                columnStyles: {
-                    // Exemplo: ajuste a largura da coluna se necessário
-                    // 0: { cellWidth: 'auto' },
-                },
-                didDrawPage: function (data) {
-                    // Adiciona título ao documento
-                    doc.setFontSize(16);
-                    doc.setTextColor(55, 65, 81);
-                    doc.text("Relatório de Dados", data.settings.margin.left, 40);
-
-                    // Adiciona número de página
-                    doc.setFontSize(10);
-                    doc.setTextColor(150);
-                    doc.text("Página " + doc.internal.getNumberOfPages(), data.settings.margin.left, doc.internal.pageSize.height - 30);
-                }
-            });
-
-            // Salva o PDF
-            doc.save("relatorio_dados_pdf.pdf");
-
-            showCustomAlert('Relatório PDF gerado com sucesso!', false);
-        }
-
-
-        // --- Event Listeners ---
-
-        /**
-         * Lida com a seleção do arquivo, lê e processa o conteúdo Excel.
-         * @param {Event} e - O evento de mudança do input de arquivo.
-         */
-        async function handleFile(e) {
-            errorMessage.classList.add('hidden');
-            loadingMessage.classList.remove('hidden');
-            tabelaExcelBody.innerHTML = '';
-            tabelaExcelHead.innerHTML = '';
-            clearSelection(); // Garante que a seleção seja limpa ao carregar um novo arquivo
-
-            const file = e.target.files[0];
-            if (!file) {
-                loadingMessage.classList.add('hidden');
-                errorMessage.textContent = 'Nenhum arquivo selecionado.';
-                errorMessage.classList.remove('hidden');
-                renderTable([]); // Renderiza tabela vazia com mensagem
-                return;
-            }
-
-            try {
-                const data = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => resolve(new Uint8Array(event.target.result));
-                    reader.onerror = (error) => reject(error);
-                    reader.readAsArrayBuffer(file);
-                });
-
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-                // Converte a planilha para JSON como array de objetos
-                // Isso assume que a primeira linha contém os cabeçalhos
-                const jsonData = XLSX.utils.sheet_to_json(sheet);
-
-                if (!jsonData || jsonData.length === 0) {
-                    tableData = [];
-                    columnHeaders = [];
-                    showCustomAlert('O arquivo Excel está vazio ou não contém dados válidos.', false);
-                    renderTable([]);
-                    return;
-                }
-
-                // Extrai os cabeçalhos da primeira linha (chaves do primeiro objeto)
-                columnHeaders = Object.keys(jsonData[0]);
-                tableData = jsonData; // Armazena os dados processados
-
-                renderTable(tableData); // Renderiza a tabela com os novos dados
-
-            } catch (error) {
-                console.error('Erro ao processar o arquivo Excel:', error);
-                errorMessage.textContent = `Erro ao processar o arquivo: ${error.message || 'Verifique o formato do arquivo.'}`;
-                errorMessage.classList.remove('hidden');
-                tableData = [];
-                columnHeaders = [];
-                renderTable([]); // Renderiza tabela vazia em caso de erro
-            } finally {
-                loadingMessage.classList.add('hidden');
-            }
-        }
-
-        // Adiciona os event listeners aos botões
-        inputExcel.addEventListener('change', handleFile);
-        btnInsert.addEventListener('click', () => openDataModal('insert'));
-        btnEdit.addEventListener('click', () => {
-            if (selectedRowIndex === -1) {
-                showCustomAlert('Por favor, selecione um registro para editar.', false);
-            } else {
-                openDataModal('edit', selectedRowIndex);
-            }
-        });
-        btnDelete.addEventListener('click', deleteRecord);
-        btnGenerateExcelReport.addEventListener('click', generateExcelReport); // Evento para o botão Excel
-        btnGeneratePdfReport.addEventListener('click', generatePdfReport); // Evento para o novo botão PDF
-
-        // Event listeners para o modal
-        saveRecordBtn.addEventListener('click', saveRecord);
-        cancelModalBtn.addEventListener('click', closeDataModal);
-        dataModal.addEventListener('click', (e) => {
-            if (e.target === dataModal) { // Fecha se clicar fora do conteúdo do modal
-                closeDataModal();
-            }
+  <!-- ... (todo o HTML até os scripts permanece igual ao seu) ... -->
+
+  <!-- ATUALIZE este trecho de SCRIPT -->
+  <script>
+    // ... (todas as declarações iniciais permanecem iguais) ...
+
+    function showCustomAlert(message, isConfirm = false) {
+      return new Promise((resolve) => {
+        customAlertMessage.textContent = message;
+        customAlertConfirmBtn.classList.toggle('hidden', !isConfirm);
+        customAlertCancelBtn.textContent = isConfirm ? 'Cancelar' : 'OK';
+        customAlertDialog.classList.add('show');
+
+        const handleConfirm = () => {
+          customAlertDialog.classList.remove('show');
+          customAlertConfirmBtn.removeEventListener('click', handleConfirm);
+          customAlertCancelBtn.removeEventListener('click', handleCancel);
+          resolve(true);
+        };
+
+        const handleCancel = () => {
+          customAlertDialog.classList.remove('show');
+          customAlertConfirmBtn.removeEventListener('click', handleConfirm);
+          customAlertCancelBtn.removeEventListener('click', handleCancel);
+          resolve(false);
+        };
+
+        customAlertConfirmBtn.addEventListener('click', handleConfirm);
+        customAlertCancelBtn.addEventListener('click', handleCancel);
+      });
+    }
+
+    function clearSelection() {
+      document.querySelectorAll('#tabelaExcel tbody tr').forEach(row => {
+        row.classList.remove('bg-blue-100');
+      });
+      selectedRowIndex = -1;
+      btnEdit.setAttribute('disabled', true);
+      btnDelete.setAttribute('disabled', true);
+      btnEdit.classList.add('opacity-50', 'cursor-not-allowed');
+      btnDelete.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    function renderTable(data) {
+      clearSelection();
+      tabelaExcelBody.innerHTML = '';
+      tabelaExcelHead.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tabelaExcelBody.innerHTML = `<tr><td colspan="${columnHeaders.length || 1}" class="text-center py-8 text-gray-500">
+            Nenhum dado para exibir. Carregue um arquivo ou insira um registro.
+        </td></tr>`;
+        tabelaExcelHead.innerHTML = `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carregue um arquivo para ver os cabeçalhos</th>`;
+        return;
+      }
+
+      columnHeaders.forEach(header => {
+        const th = document.createElement('th');
+        th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+        th.textContent = header;
+        tabelaExcelHead.appendChild(th);
+      });
+
+      data.forEach((rowData, index) => {
+        const tr = document.createElement('tr');
+        tr.dataset.rowIndex = index;
+        tr.className = 'cursor-pointer';
+
+        columnHeaders.forEach(header => {
+          const td = document.createElement('td');
+          td.textContent = rowData[header] || '';
+          tr.appendChild(td);
         });
 
-        // Inicializa a tabela vazia ao carregar a página
-        document.addEventListener('DOMContentLoaded', () => {
-            renderTable([]);
-        });
-    </script>
+        tr.addEventListener('click', () => selectRow(tr, index));
+        tabelaExcelBody.appendChild(tr);
+      });
+
+      if (selectedRowIndex !== -1 && tabelaExcelBody.children[selectedRowIndex]) {
+        tabelaExcelBody.children[selectedRowIndex].classList.add('bg-blue-100');
+      }
+    }
+
+    function selectRow(rowElement, index) {
+      document.querySelectorAll('#tabelaExcel tbody tr').forEach(row => {
+        row.classList.remove('bg-blue-100');
+      });
+      rowElement.classList.add('bg-blue-100');
+      selectedRowIndex = index;
+
+      btnEdit.removeAttribute('disabled');
+      btnDelete.removeAttribute('disabled');
+      btnEdit.classList.remove('opacity-50', 'cursor-not-allowed');
+      btnDelete.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    async function openDataModal(mode, rowIndex = -1) {
+      modalTitle.textContent = mode === 'insert' ? 'Inserir Novo Registro' : 'Editar Registro';
+      dataForm.innerHTML = '';
+      selectedRowIndex = rowIndex;
+
+      if (columnHeaders.length === 0) {
+        if (mode === 'insert') {
+          const confirmed = await showCustomAlert('Não há cabeçalhos definidos. Deseja adicionar os campos: LIBERAÇÃO, DATA, EMPREITEIRA, OBRA, QTDE, SALDO?', true);
+          if (confirmed) {
+            columnHeaders = ['LIBERAÇÃO', 'DATA', 'EMPREITEIRA', 'OBRA', 'QTDE', 'SALDO'];
+          } else {
+            return;
+          }
+        } else {
+          await showCustomAlert('Não há cabeçalhos definidos. Por favor, carregue um Excel primeiro.', false);
+          return;
+        }
+      }
+
+      columnHeaders.forEach(header => {
+        const div = document.createElement('div');
+        div.className = 'flex flex-col';
+
+        const label = document.createElement('label');
+        label.textContent = header;
+        label.className = 'block text-sm font-medium text-gray-700 mb-1';
+
+        const input = document.createElement('input');
+        input.name = header;
+        input.id = `field-${header}`;
+        input.type = 'text';
+        input.className = 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none';
+
+        if (mode === 'edit' && tableData[rowIndex]) {
+          input.value = tableData[rowIndex][header] || '';
+        }
+
+        div.appendChild(label);
+        div.appendChild(input);
+        dataForm.appendChild(div);
+      });
+
+      dataModal.classList.add('show');
+    }
+
+    function closeDataModal() {
+      dataModal.classList.remove('show');
+      dataForm.reset();
+    }
+
+    function saveRecord() {
+      const formData = new FormData(dataForm);
+      const newRecord = {};
+      columnHeaders.forEach(header => {
+        newRecord[header] = formData.get(header);
+      });
+
+      if (selectedRowIndex === -1) {
+        tableData.push(newRecord);
+        selectedRowIndex = tableData.length - 1;
+        showCustomAlert('Registro inserido com sucesso!', false);
+      } else {
+        tableData[selectedRowIndex] = newRecord;
+        showCustomAlert('Registro atualizado com sucesso!', false);
+      }
+
+      renderTable(tableData);
+      closeDataModal();
+      selectRow(tabelaExcelBody.children[selectedRowIndex], selectedRowIndex);
+    }
+
+    async function deleteRecord() {
+      if (selectedRowIndex === -1) {
+        showCustomAlert('Selecione um registro para excluir.', false);
+        return;
+      }
+
+      const confirmDelete = await showCustomAlert('Tem certeza que deseja excluir este registro?', true);
+      if (confirmDelete) {
+        tableData.splice(selectedRowIndex, 1);
+        selectedRowIndex = -1;
+        renderTable(tableData);
+        clearSelection();
+        showCustomAlert('Registro excluído com sucesso!', false);
+      }
+    }
+
+    function generateExcelReport() {
+      if (tableData.length === 0) {
+        showCustomAlert('Não há dados para exportar.', false);
+        return;
+      }
+      const dataToExport = [columnHeaders, ...tableData.map(row => columnHeaders.map(h => row[h]))];
+      const ws = XLSX.utils.aoa_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+      XLSX.writeFile(wb, "relatorio_dados_excel.xlsx");
+    }
+
+    function generatePdfReport() {
+      if (tableData.length === 0) {
+        showCustomAlert('Não há dados para exportar.', false);
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const head = [columnHeaders];
+      const body = tableData.map(row => columnHeaders.map(h => row[h]));
+      doc.autoTable({ head, body });
+      doc.save("relatorio_dados_pdf.pdf");
+    }
+
+    async function handleFile(e) {
+      errorMessage.classList.add('hidden');
+      loadingMessage.classList.remove('hidden');
+      clearSelection();
+
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        columnHeaders = Object.keys(jsonData[0] || {});
+        tableData = jsonData;
+        renderTable(tableData);
+      } catch (error) {
+        showCustomAlert('Erro ao carregar arquivo Excel.', false);
+        columnHeaders = [];
+        tableData = [];
+        renderTable([]);
+      } finally {
+        loadingMessage.classList.add('hidden');
+      }
+    }
+
+    // Event Listeners
+    inputExcel.addEventListener('change', handleFile);
+    btnInsert.addEventListener('click', () => openDataModal('insert'));
+    btnEdit.addEventListener('click', () => openDataModal('edit', selectedRowIndex));
+    btnDelete.addEventListener('click', deleteRecord);
+    btnGenerateExcelReport.addEventListener('click', generateExcelReport);
+    btnGeneratePdfReport.addEventListener('click', generatePdfReport);
+    saveRecordBtn.addEventListener('click', saveRecord);
+    cancelModalBtn.addEventListener('click', closeDataModal);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTable([]);
+    });
+  </script>
 </body>
 </html>
