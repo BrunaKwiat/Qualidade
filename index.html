@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Formulário de Obra</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Cadastro de Liberação</h1>
+  <form id="formulario">
+    <label>Liberação: <input type="text" name="liberacao" /></label>
+    <label>Data: <input type="date" name="data" /></label>
+    <label>Empreiteira: <input type="text" name="empreiteira" /></label>
+    <label>Obra: <input type="text" name="obra" /></label>
+    <label>Qtde: <input type="number" name="qtde" /></label>
+    <label>Saldo: <input type="number" name="saldo" /></label>
+    <button type="submit">Salvar</button>
+  </form>
+
+  <h2>Importar Excel</h2>
+  <input type="file" id="inputExcel" accept=".xlsx" />
+  <table id="tabelaExcel">
+    <thead>
+      <tr>
+        <th>LIBERAÇÃO</th>
+        <th>DATA</th>
+        <th>EMPREITEIRA</th>
+        <th>OBRA</th>
+        <th>QTDE</th>
+        <th>SALDO</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
