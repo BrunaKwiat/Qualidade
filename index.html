@@ -168,11 +168,11 @@
                 Inserir Novo Registro
             </button>
             <button id="btnEdit"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 opacity-50 cursor-not-allowed" disabled>
                 Editar Registro Selecionado
             </button>
             <button id="btnDelete"
-                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 opacity-50 cursor-not-allowed" disabled>
                 Excluir Registro Selecionado
             </button>
             <button id="btnGenerateExcelReport"
@@ -253,7 +253,7 @@
         const btnInsert = document.getElementById('btnInsert');
         const btnEdit = document.getElementById('btnEdit');
         const btnDelete = document.getElementById('btnDelete');
-        const btnGenerateExcelReport = document.getElementById('btnGenerateReport'); // Renomeado para clareza
+        const btnGenerateExcelReport = document.getElementById('btnGenerateExcelReport'); // Renomeado para clareza
         const btnGeneratePdfReport = document.getElementById('btnGeneratePdfReport'); // Novo botão PDF
 
         const dataModal = document.getElementById('dataModal');
@@ -306,10 +306,25 @@
         }
 
         /**
+         * Limpa a seleção da linha na tabela e desabilita os botões de edição/exclusão.
+         */
+        function clearSelection() {
+            document.querySelectorAll('#tabelaExcel tbody tr').forEach(row => {
+                row.classList.remove('bg-blue-100');
+            });
+            selectedRowIndex = -1;
+            btnEdit.setAttribute('disabled', true);
+            btnDelete.setAttribute('disabled', true);
+            btnEdit.classList.add('opacity-50', 'cursor-not-allowed');
+            btnDelete.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        /**
          * Renderiza a tabela com os dados fornecidos.
          * @param {Array<Object>} data - Array de objetos representando as linhas da tabela.
          */
         function renderTable(data) {
+            clearSelection(); // Limpa qualquer seleção existente e desabilita botões
             tabelaExcelBody.innerHTML = ''; // Limpa o corpo da tabela
             tabelaExcelHead.innerHTML = ''; // Limpa o cabeçalho da tabela
 
@@ -365,6 +380,12 @@
             // Adiciona a seleção à linha clicada
             rowElement.classList.add('bg-blue-100');
             selectedRowIndex = index;
+
+            // Habilita os botões de edição e exclusão
+            btnEdit.removeAttribute('disabled');
+            btnDelete.removeAttribute('disabled');
+            btnEdit.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnDelete.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
         /**
@@ -372,36 +393,30 @@
          * @param {string} mode - 'insert' ou 'edit'.
          * @param {number} [rowIndex] - O índice da linha a ser editada (apenas para 'edit').
          */
-        function openDataModal(mode, rowIndex = -1) {
+        async function openDataModal(mode, rowIndex = -1) { // Tornando a função async
             modalTitle.textContent = mode === 'insert' ? 'Inserir Novo Registro' : 'Editar Registro';
             dataForm.innerHTML = ''; // Limpa campos anteriores
             selectedRowIndex = rowIndex; // Atualiza o índice da linha selecionada
 
-            // Cria os campos do formulário dinamicamente com base nos cabeçalhos
-            if (columnHeaders.length === 0 && mode === 'insert') {
-                showCustomAlert('Por favor, carregue um arquivo Excel primeiro para definir os cabeçalhos das colunas, ou insira os cabeçalhos manualmente aqui.', false);
-                // Permite ao usuário adicionar cabeçalhos se não houver arquivo carregado
-                const defaultHeader = 'Nova Coluna';
-                columnHeaders.push(defaultHeader);
-                const div = document.createElement('div');
-                div.className = 'flex flex-col';
-                const label = document.createElement('label');
-                label.htmlFor = `field-${defaultHeader}`;
-                label.className = 'block text-sm font-medium text-gray-700 mb-1';
-                label.textContent = defaultHeader;
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = `field-${defaultHeader}`;
-                input.name = defaultHeader;
-                input.className = 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
-                div.appendChild(label);
-                div.appendChild(input);
-                dataForm.appendChild(div);
-            } else if (columnHeaders.length === 0 && mode === 'edit') {
-                 showCustomAlert('Não há cabeçalhos de coluna definidos para edição. Por favor, carregue um arquivo Excel.', false);
-                 return;
+            // Lida com o caso onde não há cabeçalhos definidos para inserção/edição
+            if (columnHeaders.length === 0) {
+                if (mode === 'insert') {
+                    const confirmed = await showCustomAlert('Não há cabeçalhos de coluna definidos. Deseja adicionar uma coluna padrão "Nova Coluna" para começar?', true);
+                    if (confirmed) {
+                        columnHeaders.push('Nova Coluna');
+                    } else {
+                        return; // Usuário cancelou
+                    }
+                } else { // mode === 'edit'
+                    await showCustomAlert('Não há cabeçalhos de coluna definidos para edição. Por favor, carregue um arquivo Excel primeiro.', false);
+                    return; // Impede que o modal seja aberto
+                }
             }
 
+            // Se columnHeaders ainda estiver vazio após a lógica acima (ex: usuário cancelou o cabeçalho padrão)
+            if (columnHeaders.length === 0) {
+                return;
+            }
 
             columnHeaders.forEach(header => {
                 const div = document.createElement('div');
@@ -460,6 +475,7 @@
             }
             renderTable(tableData);
             closeDataModal();
+            clearSelection(); // Limpa a seleção após salvar
         }
 
         /**
@@ -474,7 +490,7 @@
             const confirmDelete = await showCustomAlert('Tem certeza que deseja excluir este registro?', true);
             if (confirmDelete) {
                 tableData.splice(selectedRowIndex, 1); // Remove o registro do array
-                selectedRowIndex = -1; // Reseta a seleção
+                clearSelection(); // Limpa a seleção antes de re-renderizar
                 renderTable(tableData);
                 showCustomAlert('Registro excluído com sucesso!', false);
             }
@@ -560,7 +576,7 @@
             loadingMessage.classList.remove('hidden');
             tabelaExcelBody.innerHTML = '';
             tabelaExcelHead.innerHTML = '';
-            selectedRowIndex = -1; // Reseta a seleção
+            clearSelection(); // Garante que a seleção seja limpa ao carregar um novo arquivo
 
             const file = e.target.files[0];
             if (!file) {
